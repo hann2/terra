@@ -12,32 +12,12 @@ var ProceduralCanvas = React.createClass({
   },
   componentDidUpdate: function() {
     var canvas = React.findDOMNode(this);
-    var ctx = canvas.getContext('2d');
+    var signal = Signal2d
+        .generatePerlin(this.props.width, this.props.height, 0.01, 0.01, this.props.seed)
+        .add(1.0)
+        .multiply(0.5 * 256);
 
-    var image = ctx.createImageData(this.props.width, this.props.height);
-    var data = image.data;
-
-    var start = Date.now();
-
-    noise.seed(this.props.seed);
-    for (var x = 0; x < this.props.width; x++) {
-      for (var y = 0; y < this.props.height; y++) {
-        var value = Math.abs(noise.perlin2(x / 100, y / 100) * 0.5 + 0.5);
-        value *= 256;
-
-        var cell = (x + y * this.props.width) * 4;
-        data[cell] = data[cell + 1] = data[cell + 2] = value;
-        data[cell + 3] = 255; // alpha.
-      }
-    }
-
-    var end = Date.now();
-
-    ctx.fillColor = 'black';
-    ctx.fillRect(0, 0, 100, 100);
-    ctx.putImageData(image, 0, 0);
-    ctx.font = '16px sans-serif'
-    ctx.textAlign = 'center';
+    renderSignalToCanvas(canvas, signal);
   }
 });
 
