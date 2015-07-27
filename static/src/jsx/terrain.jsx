@@ -12,7 +12,7 @@ var ProceduralCanvas = React.createClass({
   },
   componentDidUpdate: function() {
     var canvas = React.findDOMNode(this);
-    var signal = Signal2d
+    var signal = Signal2D
         .generatePerlin(this.props.width, this.props.height, 0.01, 0.01, this.props.seed)
         .add(1.0)
         .multiply(0.5 * 256);
@@ -76,8 +76,8 @@ var Procedural = React.createClass({
     },
     getInitialState: function() {
         return {
-            width: 1024,
-            height: 728,
+            width: 512,
+            height: 512,
             seed: Math.random()
         };
     },

@@ -1,23 +1,4 @@
 var Signal2D = (function() {
-    function allocateData(data) {
-        var newData = [];
-
-        for(var i = 0; i < data.length; i++) {
-            newData.push([]);
-        }
-        return newData;
-    }
-
-    function normalizeData(data) {
-        var newData = allocateData(data);
-        for (var i = 0; i < data.length; i++) {
-            for (var j = 0; j < data[0].length; j++) {
-                newData[i][j] = [data[i][j]];
-            }
-        }
-        return newData;
-    }
-
     function Signal2D(data) {
         this.width = data.length;
         this.height = data[0].length;
@@ -26,13 +7,21 @@ var Signal2D = (function() {
             this.data = data
         } else {
             this.depth = 1;
-            this.data = normalizeData(data);
+            var newData = [];
+            for (var i = 0; i < data.length; i++) {
+                newData[i] = [];
+                for (var j = 0; j < data[0].length; j++) {
+                    newData[i][j] = [data[i][j]];
+                }
+            }
+            this.data = newData;
         }
     }
 
     Signal2D.prototype.perPixel = function(f) {
-        var newData = allocateData(data);
+        var newData = [];
         for (var i = 0; i < this.data.length; i++) {
+            newData[i] = [];
             for (var j = 0; j < this.data[0].length; j++) {
                 newData[i][j] = f(this.data[i][j], [i, j]);
             }
@@ -41,9 +30,11 @@ var Signal2D = (function() {
     };
 
     Signal2D.prototype.perChannel = function(f) {
-        var newData = allocateData(data);
+        var newData = [];
         for (var i = 0; i < this.data.length; i++) {
+            newData[i] = [];
             for (var j = 0; j < this.data[0].length; j++) {
+                newData[i][j] = [];
                 for (var k = 0; k < this.data[0][0].length; k++) {
                     newData[i][j][k] = f(this.data[i][j][k], [i, j, k]);
                 }
