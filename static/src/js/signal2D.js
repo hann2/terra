@@ -147,6 +147,8 @@ var Signal2D = (function() {
         var emptySignal = Signal2D.generateEmpty(width, height, 1);
         return emptySignal.perChannel(
             function(value, coord) {
+                var x = coord[0] - width / 2;
+                var y = coord[1] - height / 2;
                 return Math.exp(-((x * x) / (2 * xVariance) + (y * y) / (2 * yVariance)));
             }
         );
@@ -164,14 +166,11 @@ var Signal2D = (function() {
         );
     };
 
-    Signal2D.generateTerbulence = function(width, height, xScale, yScale, persistence, octaves, seed) {
-        if (!channels) {
-            channels = 1;
-        }
+    Signal2D.generateTurbulence = function(width, height, xScale, yScale, persistence, octaves, seed) {
         if (seed) {
             noise.seed(seed);
         }
-        var emptySignal = Signal2D.generateEmpty(width, height, channels);
+        var emptySignal = Signal2D.generateEmpty(width, height, 1);
         return emptySignal.perChannel(
             function(value, coord) {
                 return noise.perlin2(coord[0] * xScale, coord[1] * yScale, coord[2] * 123.123);
