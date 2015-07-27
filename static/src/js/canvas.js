@@ -22,11 +22,11 @@ function renderSignalToCanvas(canvas, signal) {
             } else {
                 data[cell + 3] = 255;
             }
+        }, null, function() {
+            ctx.fillColor = 'black';
+            ctx.fillRect(0, 0, 100, 100);
+            ctx.putImageData(image, 0, 0);
         }
     );
-
-    ctx.fillColor = 'black';
-    ctx.fillRect(0, 0, 100, 100);
-    ctx.putImageData(image, 0, 0);
 }
 
