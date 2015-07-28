@@ -1,4 +1,22 @@
 
+var supportedFields = {
+    'perlin' : {
+        'seed' : true
+    },
+    'turbulence' : {
+        'seed' : true
+    },
+    'gaussian' : {
+        'width' : true,
+        'height' : true
+    },
+    'continent' : {
+        'seed' : true,
+        'width' : true,
+        'height' : true
+    }
+};
+
 var ProceduralCanvas = React.createClass({
   render: function() {
     var canvasStyle = {width: this.props.width, height: this.props.height};
@@ -12,35 +30,7 @@ var ProceduralCanvas = React.createClass({
   },
   componentDidUpdate: function() {
     var canvas = React.findDOMNode(this);
-    var signal;
-    console.log('this.props.signal '+ this.props.signal);
-    switch (this.props.signal) {
-        case 'perlin':
-            signal = Signal2D
-                .generatePerlin(this.props.width, this.props.height, this.props.xScale, this.props.yScale, this.props.seed)
-                .add(1.0)
-                .multiply(0.5 * 256);
-            break;
-        case 'turbulence':
-            signal = Signal2D
-                .generateTurbulence(this.props.width,
-                    this.props.height,
-                    this.props.xScale,
-                    this.props.yScale,
-                    this.props.persistence,
-                    this.props.octaves,
-                    this.props.seed)
-                .add(1.0)
-                .multiply(0.5 * 256);
-            break;
-        case 'gaussian':
-            signal = Signal2D
-                .generateGaussian(this.props.width, this.props.height, this.props.xVariance, this.props.yVariance)
-                .multiply(256);
-            break;
-    }
-
-    renderSignalToCanvas(canvas, signal);
+    terrain.render(canvas, this.props);
   }
 });
 
@@ -48,9 +38,10 @@ var ProceduralControls = React.createClass({
     render: function() {
         var inputStyle = {margin: 10};
         var props = this.props;
-        var simpleInput = function(name, value, show) {
+        var s = this.props.signal;
+        var simpleInput = function(name, value) {
             var fullWidth = {width: 300};
-            if (!show) {
+            if (!supportedFields[s][value]) {
                 fullWidth.display = 'none';
             }
             return (<div style={fullWidth}>
@@ -58,33 +49,45 @@ var ProceduralControls = React.createClass({
                 <input type='text' defaultValue={props[value]} style={inputStyle} ref={value}/>
             </div>);
         }
-        var s = this.props.signal;
-        var inputElements = [
-            <div style={{width: 300}}>
-                <label>Seed</label>
-                <input type='text' defaultValue={this.props.seed} style={inputStyle} ref='seed'/>
-                <input onClick={this.handleReroll} type='submit' value='reroll'/>
-            </div>,
-            simpleInput('Width', 'width', true),
-            simpleInput('Height', 'height', true),
-            simpleInput('X scale', 'xScale', s == 'perlin' || s == 'turbulence'),
-            simpleInput('Y scale', 'yScale', s == 'perlin' || s == 'turbulence'),
-            simpleInput('X variance', 'xVariance', s == 'gaussian'),
-            simpleInput('Y variance', 'yVariance', s == 'gaussian'),
-            simpleInput('Persistence', 'persistence', s == 'turbulence'),
-            simpleInput('Octaves', 'octaves', s == 'turbulence')
+        var fullWidth = {width: 300};
+        if (!supportedFields[s].seed) {
+            fullWidth.display = 'none';
+        }
+        var simpleInputElements = [
+            simpleInput('Width', 'width'),
+            simpleInput('Height', 'height'),
+            simpleInput('X scale', 'xScale'),
+            simpleInput('Y scale', 'yScale'),
+            simpleInput('X variance', 'xVariance'),
+            simpleInput('Y variance', 'yVariance'),
+            simpleInput('Persistence', 'persistence'),
+            simpleInput('Octaves', 'octaves')
         ];
         return (
             <div>
                 <div style={{width: 300}}>
                     <label>Signal</label>
                     <select defaultValue={this.props.signal} style={inputStyle} onChange={this.handleSignalChange} ref='signal'>
-                        <option value='perlin'>Perlin</option>
+                        <option value='perlin'>Perlin noise</option>
                         <option value='turbulence'>Turbulence</option>
                         <option value='gaussian'>Gaussian</option>
+                        <option value='continent'>Continent</option>
                     </select>
                 </div>
-                {inputElements}
+                <div style={fullWidth}>
+                    <label>Random</label>
+                    <input type='text' defaultValue={this.props.seed} style={inputStyle} ref='seed'/>
+                    <input onClick={this.handleReroll} type='submit' value='reroll'/>
+                </div>
+                {simpleInputElements}
+                <div style={{width: 300}}>
+                    <label>Display</label>
+                    <select defaultValue={this.props.display} style={inputStyle} onChange={this.handleSignalChange} ref='display'>
+                        <option value='map'>Map</option>
+                        <option value='topo'>Topographical</option>
+                        <option value='parchment'>Parchment</option>
+                    </select>
+                </div>
                 <input onClick={this.handleSubmit} type='submit' value='render'/>
             </div>
         );
@@ -104,6 +107,7 @@ var ProceduralControls = React.createClass({
         var yVariance = React.findDOMNode(this.refs.yVariance).value.trim();
         var persistence = React.findDOMNode(this.refs.persistence).value.trim();
         var octaves = React.findDOMNode(this.refs.octaves).value.trim();
+        var display = React.findDOMNode(this.refs.display).value.trim();
 
         this.props.submitRender({
             signal: signal,
@@ -115,7 +119,8 @@ var ProceduralControls = React.createClass({
             xVariance: xVariance,
             yVariance: yVariance,
             persistence: persistence,
-            octaves: octaves
+            octaves: octaves,
+            display: display
         });
     },
     handleReroll: function() {
@@ -141,16 +146,17 @@ var Procedural = React.createClass({
     },
     getInitialState: function() {
         return {
-            signal: 'perlin',
+            signal: 'continent',
             width: 512,
             height: 512,
             xScale: 0.01,
             yScale: 0.01,
-            xVariance: 1000,
-            yVariance: 1000,
+            xVariance: 20000,
+            yVariance: 15000,
             persistence: 0.5,
             octaves: 8,
-            seed: Math.random()
+            seed: Math.random(),
+            display: 'map'
         };
     },
     submitRender: function(data) {
