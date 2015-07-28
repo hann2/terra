@@ -44,7 +44,7 @@ var terrain = (function() {
         renderSignalToCanvas(canvas, data, props.width, props.height);
     };
 
-    var getContinentColor = function(height) {
+    var getContinentColor = function(height, waterLevel) {
         if (height > 0.9) {
             return [255, 250, 250]; //white
         } else if (height > 0.8) {
@@ -55,20 +55,20 @@ var terrain = (function() {
             return [0, 100, 0];     //dark green
         } else if (height > 0.25) {
             return [50, 205, 50];   //light green
-        } else if (height > 0.2) {
+        } else if (height > waterLevel) {
             return [238, 232, 170]; //tan
         } else {
             return [65, 105, 225];  //blue
         }
     };
 
-    var renderMap = function(canvas, props, heightMap) {
+    var renderMap = function(canvas, props, heightMap, waterLevel) {
         var imageData = [];
         for (var i = 0; i < heightMap.length; i++) {
             var dataCell = i;
             var imageCell = i * 4;
             var height = heightMap[dataCell];
-            var color = getContinentColor(height);
+            var color = getContinentColor(height, waterLevel);
             imageData[imageCell] = color[0];
             imageData[imageCell + 1] = color[1];
             imageData[imageCell + 2] = color[2];
@@ -77,7 +77,7 @@ var terrain = (function() {
         renderImageToCanvas(canvas, imageData, props.width, props.height);
     };
 
-    var renderTopographical = function(canvas, props, heightMap) {
+    var renderTopographical = function(canvas, props, heightMap, waterLevel) {
         var imageData = [];
         for (var i = 0; i < props.width; i++) {
             for (var j = 0; j < props.height; j++) {
@@ -92,7 +92,7 @@ var terrain = (function() {
 
                 if (i !== (props.width - 1) && j !== (props.height - 1) && heightDiffers) {
                     color = [0, 0, 0];
-                } else if (height > 0.2) {
+                } else if (height > waterLevel) {
                     color = [238, 232, 170];
                 } else {
                     color = [65, 105, 225];
@@ -107,14 +107,29 @@ var terrain = (function() {
         renderImageToCanvas(canvas, imageData, props.width, props.height);
     };
 
-    var renderParchment = function(canvas, props, heightMap) {
+    var renderParchment = function(canvas, props, heightMap, waterLevel) {
         var imageData = [];
         for (var i = 0; i < props.width; i++) {
             for (var j = 0; j < props.height; j++) {
-                var dataCell = (i + j * props.width);
                 var imageCell = (i + j * props.width) * 4;
-                var height = heightMap[dataCell];
-                var color = getContinentColor(height);
+                var height = heightMap[i + j * props.width];
+                var height2 = heightMap[i + 1 + j * props.width];
+                var height3 = heightMap[i + (j + 1) * props.width];
+                var height4 = heightMap[i + 1 + (j + 1) * props.width];
+
+                var heightDiffers = (height <= waterLevel && (height2 > waterLevel || height3 > waterLevel || height4 > waterLevel))
+                                 || (height >= waterLevel && (height2 < waterLevel || height3 < waterLevel || height4 < waterLevel));
+
+                if (i !== (props.width - 1) && j !== (props.height - 1) && heightDiffers) {
+                    color = [0, 0, 0];
+                } else if (height > waterLevel) {
+                    color = [238, 232, 170];
+                } else {
+                    // color = [65, 105, 225];
+                    var scale = 0.8;
+                    color = [238 * scale, 232 * scale, 170 * scale];
+                }
+
                 imageData[imageCell] = color[0];
                 imageData[imageCell + 1] = color[1];
                 imageData[imageCell + 2] = color[2];
@@ -149,16 +164,16 @@ var terrain = (function() {
         processing.normalize(heightMap);
         // renderSignalToCanvas(canvas, heightMap, props.width, props.height);
 
-        console.log('' + props.display);
+        var waterLevel = 0.2;
         switch (props.display) {
             case 'map':
-                renderMap(canvas, props, heightMap);
+                renderMap(canvas, props, heightMap, waterLevel);
                 break;
             case 'topo':
-                renderTopographical(canvas, props, heightMap);
+                renderTopographical(canvas, props, heightMap, waterLevel);
                 break;
             case 'parchment':
-                renderParchment(canvas, props, heightMap);
+                renderParchment(canvas, props, heightMap, waterLevel);
                 break;
         }
     };
