@@ -23,7 +23,7 @@ var processing = (function() {
 
     processing.gaussian = function(x, y, xVariance, yVariance) {
         return Math.exp(-((x * x) / (2 * xVariance) + (y * y) / (2 * yVariance)));
-    }
+    };
 
     processing.turbulence = function(x, y, persistence, octaves) {
         var frequency = 1;
@@ -56,7 +56,37 @@ var processing = (function() {
         for (var i = 0; i < data.length; i++) {
             data[i] = range === 0 ? 0 : (data[i] - min) / range;
         }
-    }
+    };
+
+    /**
+     *  Normalizes, considering only the region within calibratedWidth/calibratedHeight
+     *      assumes calibratedWidth >= width && height >= calibratedHeight
+     */
+    processing.normalizeCalibrated = function(data, width, height, calibratedWidth, calibratedHeight) {
+        var max = data[Math.floor(width / 2) + Math.floor(height / 2) * width];
+        var min = max;
+        var xOffset = Math.floor((calibratedWidth - width) / 2);
+        var yOffset = Math.floor((calibratedHeight - height) / 2);
+        for (var i = 0; i < calibratedWidth; i++) {
+            for (var j = 0; j < calibratedWidth; j++) {
+                var x = i + xOffset;
+                var y = j + yOffset;
+                var value = data[x + j * width];
+                if (value > max) {
+                    max = value;
+                }
+                if (value < min) {
+                    min = value;
+                }
+            }
+        }
+
+        var range = max - min;
+        for (var i = 0; i < data.length; i++) {
+            data[i] = range === 0 ? 0 : (data[i] - min) / range;
+            data[i] = Math.min(1, Math.max(0, data[i]));
+        }
+    };
 
     return processing;
 })();

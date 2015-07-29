@@ -4,8 +4,10 @@ var Continent = (function() {
         this.seed = seed;
         this.width = width;
         this.height = height;
-        this.continentWidth = width;
-        this.continentHeight = height;
+        this.continentWidth = 512;
+        this.continentHeight = 512;
+        this.calibrationWidth = this.continentWidth;
+        this.calibrationHeight = this.continentHeight;
         this.waterLevel = 0.2;
     };
 
@@ -147,7 +149,7 @@ var Continent = (function() {
                 heightMap[cell] = turbulence;
             }
         }
-        processing.normalize(heightMap);
+        processing.normalizeCalibrated(heightMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
@@ -157,7 +159,7 @@ var Continent = (function() {
                 heightMap[cell] *= gauss;
             }
         }
-        processing.normalize(heightMap);
+        processing.normalizeCalibrated(heightMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
         return heightMap;
     };
 
@@ -172,7 +174,7 @@ var Continent = (function() {
                 temperatureMap[cell] = turbulence;
             }
         }
-        processing.normalize(temperatureMap);
+        processing.normalizeCalibrated(temperatureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
@@ -181,7 +183,7 @@ var Continent = (function() {
                 temperatureMap[cell] = processing.bias(0.65, temperatureMap[cell]) * gauss;
             }
         }
-        processing.normalize(temperatureMap);
+        processing.normalizeCalibrated(temperatureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
         return temperatureMap;
     };
 
@@ -213,7 +215,7 @@ var Continent = (function() {
                 }
             }
         }
-        processing.normalize(moistureMap);
+        processing.normalizeCalibrated(moistureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
         noise.seed((this.seed + 0.2) % 1);
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
@@ -223,7 +225,7 @@ var Continent = (function() {
                 moistureMap[cell] += turbulence;
             }
         }
-        processing.normalize(moistureMap);
+        processing.normalizeCalibrated(moistureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
         return moistureMap;
     };
 

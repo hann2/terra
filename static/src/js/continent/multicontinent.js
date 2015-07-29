@@ -2,6 +2,8 @@ var Multicontinent = (function () {
     var Multicontinent = function(seed, width, height) {
         Continent.call(this, seed, width, height);
         this.numContinents = 5;
+        this.calibrationWidth = this.continentWidth;
+        this.calibrationHeight = this.continentHeight;
         this.continentWidth /= Math.sqrt(this.numContinents);
         this.continentHeight /= Math.sqrt(this.numContinents);
     };
@@ -25,7 +27,8 @@ var Multicontinent = (function () {
         Math.seedrandom('' + this.seed);
         for (var i = 0; i < this.numContinents; i++) {
             continentCoords[i] = [
-                Math.random() * this.width, Math.random() * this.height
+                Math.random() * this.calibrationWidth + (this.width - this.calibrationWidth) / 2,
+                Math.random() * this.calibrationHeight + (this.height - this.calibrationHeight) / 2
             ];
         }
 
