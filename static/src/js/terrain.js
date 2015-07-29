@@ -77,6 +77,31 @@ var terrain = (function() {
         renderImageToCanvas(canvas, imageData, props.width, props.height);
     };
 
+    var getHeatColor = function(temperature) {
+        if (temperature > 0.5) {
+            scale = (temperature - 0.5) * 2;
+            return [256 * scale, 256 * (1 - scale), 0];
+        } else {
+            scale = temperature * 2;
+            return [0, 256 * scale, 256 * (1 - scale)];
+        }
+    };
+
+    var renderHeatMap = function(canvas, props, map) {
+        var imageData = [];
+        for (var i = 0; i < map.length; i++) {
+            var dataCell = i;
+            var imageCell = i * 4;
+            var temperature = map[dataCell];
+            var color = getHeatColor(temperature);
+            imageData[imageCell] = color[0];
+            imageData[imageCell + 1] = color[1];
+            imageData[imageCell + 2] = color[2];
+            imageData[imageCell + 3] = 256;
+        }
+        renderImageToCanvas(canvas, imageData, props.width, props.height);
+    };
+
     var renderTopographical = function(canvas, props, heightMap, waterLevel) {
         var imageData = [];
         for (var i = 0; i < props.width; i++) {
@@ -145,7 +170,7 @@ var terrain = (function() {
         for (var i = 0; i < props.width; i++) {
             for (var j = 0; j < props.height; j++) {
                 var cell = (i + j * props.width);
-                var turbulence = processing.turbulence(props.xScale * i, props.yScale * j, props.persistence, props.octaves);
+                var turbulence = processing.turbulence(0.01 * i, 0.01 * j, 0.5, 8);
                 turbulence = processing.gain(0.4, turbulence);
                 heightMap[cell] = turbulence;
             }
@@ -157,12 +182,72 @@ var terrain = (function() {
                 var cell = (i + j * props.width);
                 var x = i - props.width / 2;
                 var y = j - props.height / 2;
-                var gauss = processing.gaussian(x, y, props.xVariance, props.yVariance) * 0.80 + 0.15;
+                var gauss = processing.gaussian(x, y, 15000, 15000) * 0.80 + 0.15;
                 heightMap[cell] *= gauss;
             }
         }
         processing.normalize(heightMap);
         // renderSignalToCanvas(canvas, heightMap, props.width, props.height);
+
+        var temperatureMap = [];
+        noise.seed((props.seed + 0.1) % 1);
+        for (var i = 0; i < props.width; i++) {
+            for (var j = 0; j < props.height; j++) {
+                var cell = (i + j * props.width);
+                var turbulence = processing.turbulence(0.01 * i, 0.01 * j, 0.5, 8);
+                // turbulence = processing.bias(0.7, turbulence);
+                temperatureMap[cell] = turbulence;
+            }
+        }
+        processing.normalize(temperatureMap);
+        for (var i = 0; i < props.width; i++) {
+            for (var j = 0; j < props.height; j++) {
+                var cell = (i + j * props.width);
+                var y = j - props.height / 2;
+                var gauss = processing.gaussian(0, y, 1, 15000);
+                temperatureMap[cell] = processing.bias(0.65, temperatureMap[cell]) * gauss;
+            }
+        }
+        processing.normalize(temperatureMap);
+        // renderHeatMap(canvas, props, temperatureMap);
+
+        var rainBudget = 100;
+        var highestReached = [];
+        for (var j = 0; j < props.height; j++) {
+            highestReached[j] = 0;
+        }
+        var moistureMap = [];
+        for (var i = 0; i < heightMap.length; i++) {
+            moistureMap[i] = 0;
+        }
+        for (var j = 0; j < props.height; j++) {
+            for (var i = 0; i < props.width; i++) {
+                var height = Math.floor(heightMap[i + j * props.width] * rainBudget);
+
+                if (height > highestReached[j]) {
+                    var rainUnits = height - highestReached[j];
+                    highestReached[j] = height;
+                    if (rainUnits > 0) {
+                        for (var k = 0; k < 100; k++) {
+                            if ((i - k) >= 0) {
+                                moistureMap[(i - k) + j * props.width] += processing.gaussian(0, k, 1, 1000);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // processing.normalize(moistureMap);
+        // noise.seed((props.seed + 0.2) % 1);
+        // for (var i = 0; i < props.width; i++) {
+        //     for (var j = 0; j < props.height; j++) {
+        //         var cell = (i + j * props.width);
+        //         var turbulence = processing.turbulence(0.01 * i, 0.01 * j, 0.5, 8);
+        //         // turbulence = processing.bias(0.7, turbulence);
+        //         moistureMap[cell] += turbulence;
+        //     }
+        // }
+        processing.normalize(moistureMap);
 
         var waterLevel = 0.2;
         switch (props.display) {
@@ -174,6 +259,12 @@ var terrain = (function() {
                 break;
             case 'parchment':
                 renderParchment(canvas, props, heightMap, waterLevel);
+                break;
+            case 'temperature':
+                renderHeatMap(canvas, props, temperatureMap);
+                break;
+            case 'moisture':
+                renderHeatMap(canvas, props, moistureMap);
                 break;
         }
     };
@@ -198,5 +289,3 @@ var terrain = (function() {
 
     return terrain;
 })();
-
-

@@ -13,7 +13,8 @@ var supportedFields = {
     'continent' : {
         'seed' : true,
         'width' : true,
-        'height' : true
+        'height' : true,
+        'display' : true
     }
 };
 
@@ -63,6 +64,10 @@ var ProceduralControls = React.createClass({
             simpleInput('Persistence', 'persistence'),
             simpleInput('Octaves', 'octaves')
         ];
+        var fullWidth2 = {width: 300};
+        if (!supportedFields[s].display) {
+            fullWidth2.display = 'none';
+        }
         return (
             <div>
                 <div style={{width: 300}}>
@@ -80,12 +85,14 @@ var ProceduralControls = React.createClass({
                     <input onClick={this.handleReroll} type='submit' value='reroll'/>
                 </div>
                 {simpleInputElements}
-                <div style={{width: 300}}>
+                <div style={fullWidth2}>
                     <label>Display</label>
                     <select defaultValue={this.props.display} style={inputStyle} onChange={this.handleSignalChange} ref='display'>
                         <option value='map'>Map</option>
                         <option value='topo'>Topographical</option>
                         <option value='parchment'>Parchment</option>
+                        <option value='temperature'>Temperature</option>
+                        <option value='moisture'>Moisture</option>
                     </select>
                 </div>
                 <input onClick={this.handleSubmit} type='submit' value='render'/>
@@ -98,7 +105,7 @@ var ProceduralControls = React.createClass({
     },
     handleSubmit: function() {
         var signal = React.findDOMNode(this.refs.signal).value.trim();
-        var seed = React.findDOMNode(this.refs.seed).value.trim();
+        var seed = parseFloat(React.findDOMNode(this.refs.seed).value.trim());
         var width = React.findDOMNode(this.refs.width).value.trim();
         var height = React.findDOMNode(this.refs.height).value.trim();
         var xScale = React.findDOMNode(this.refs.xScale).value.trim();
@@ -156,7 +163,7 @@ var Procedural = React.createClass({
             persistence: 0.5,
             octaves: 8,
             seed: Math.random(),
-            display: 'map'
+            display: 'moisture'
         };
     },
     submitRender: function(data) {
