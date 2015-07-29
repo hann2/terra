@@ -15,6 +15,12 @@ var supportedFields = {
         'width' : true,
         'height' : true,
         'display' : true
+    },
+    'multicontinent' : {
+        'seed' : true,
+        'width' : true,
+        'height' : true,
+        'display' : true
     }
 };
 
@@ -77,6 +83,7 @@ var ProceduralControls = React.createClass({
                         <option value='turbulence'>Turbulence</option>
                         <option value='gaussian'>Gaussian</option>
                         <option value='continent'>Continent</option>
+                        <option value='multicontinent'>Multi-Continent</option>
                     </select>
                 </div>
                 <div style={fullWidth}>
@@ -153,7 +160,7 @@ var Procedural = React.createClass({
     },
     getInitialState: function() {
         return {
-            signal: 'continent',
+            signal: 'multicontinent',
             width: 512,
             height: 512,
             xScale: 0.01,
@@ -163,7 +170,7 @@ var Procedural = React.createClass({
             persistence: 0.5,
             octaves: 8,
             seed: Math.random(),
-            display: 'moisture'
+            display: 'map'
         };
     },
     submitRender: function(data) {
