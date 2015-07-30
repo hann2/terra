@@ -51,6 +51,74 @@ var Continent = (function() {
         renderImageToCanvas(canvas, imageData, this.width, this.height);
     };
 
+    Continent.prototype.getContinentColor = function(dataCell) {
+        var height = this.heightMap[dataCell];
+        var temperature = this.temperatureMap[dataCell];
+        var moisture = this.moistureMap[dataCell];
+
+        var colorTerms = [];
+
+        if (temperature < 0.01) {
+            return [255, 250, 250];
+        } else if (height <= this.waterLevel) {
+            return [65, 105, 225];
+        }
+
+        if (temperature < 0.25) {
+            colorTerms.push([238, 233, 233, (0.25 - temperature) * 20]); //off-white
+        }
+
+        if (height > 0.85) {
+            var range = 1 - 0.85;
+            var ratio = (height - 0.85) / range;
+            colorTerms.push([255, 250, 250, ratio]); //white
+            colorTerms.push([139, 137, 137, 1 - ratio]); //grey
+        } else if (height > 0.75) {
+            var range = 0.85 - 0.75;
+            var ratio = (height - 0.75) / range;
+            colorTerms.push([139, 137, 137, ratio]); //grey
+            colorTerms.push([139, 119, 101, 1 - ratio]); //brown
+        } else if (height > 0.6) {
+            var range = 0.75 - 0.6;
+            var ratio = (height - 0.6) / range;
+            colorTerms.push([139, 119, 101, ratio]); //brown
+            colorTerms.push([0, 100, 0, 1 - ratio]);     //dark green
+        } else if (height > 0.25) {
+            var range = 0.6 - 0.25;
+            var ratio = (height - 0.25) / range
+            colorTerms.push([0, 100, 0, 5 * ratio]);     //dark green
+            colorTerms.push([50, 205, 50, 1 - ratio]);   //light green
+        } else if (height > 0.22) {
+            colorTerms.push([50, 205, 50, 1]);   //light green
+        } else {
+            colorTerms.push([238, 232, 170, 1]); //tan
+        }
+
+        var color = [0, 0, 0, 0];
+        for (var i = 0; i < colorTerms.length; i++) {
+            color[0] += colorTerms[i][3] * colorTerms[i][0];
+            color[1] += colorTerms[i][3] * colorTerms[i][1];
+            color[2] += colorTerms[i][3] * colorTerms[i][2];
+            color[3] += colorTerms[i][3];
+        }
+        return [color[0] / color[3], color[1] / color[3], color[2] / color[3]];
+    };
+
+    Continent.prototype.renderMap2 = function(canvas) {
+        var imageData = [];
+        for (var i = 0; i < this.heightMap.length; i++) {
+            var dataCell = i;
+            var imageCell = i * 4;
+            var elevation = this.heightMap[dataCell];
+            var color = this.getContinentColor(dataCell);
+            imageData[imageCell] = color[0];
+            imageData[imageCell + 1] = color[1];
+            imageData[imageCell + 2] = color[2];
+            imageData[imageCell + 3] = 256;
+        }
+        renderImageToCanvas(canvas, imageData, this.width, this.height);
+    };
+
     var getHeatColor = function(temperature) {
         if (temperature > 0.5) {
             scale = (temperature - 0.5) * 2;
@@ -171,7 +239,7 @@ var Continent = (function() {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
-                var turbulence = processing.turbulence(0.01 * i, 0.01 * j, 0.5, 8);
+                var turbulence = processing.turbulence(0.01 * i, 0.01 * j, 0.5, 4);
                 // turbulence = processing.bias(0.7, turbulence);
                 temperatureMap[cell] = turbulence;
             }
@@ -182,7 +250,7 @@ var Continent = (function() {
                 var cell = (i + j * this.width);
                 var y = j - this.height / 2;
                 var gauss = processing.gaussian(0, y, 1, 30 * this.continentHeight);
-                temperatureMap[cell] = processing.bias(0.65, temperatureMap[cell]) * gauss;
+                temperatureMap[cell] = (temperatureMap[cell] + gauss) * gauss;
             }
         }
         processing.normalizeCalibrated(temperatureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
@@ -227,8 +295,79 @@ var Continent = (function() {
                 moistureMap[cell] += turbulence;
             }
         }
-        processing.normalizeCalibrated(moistureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
-        return moistureMap;
+
+        var smoothMoistureData = [];
+        var kernelSize = 2;
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                if (this.heightMap[i + j * this.width] < this.waterLevel) {
+                    smoothMoistureData[i + j * this.width] = moistureMap[i + j * this.width];
+                    continue;
+                }
+                var sum = 0;
+                var weightSum = 0;
+                for (var l = -kernelSize; l <= kernelSize; l++) {
+                    for (var m = -kernelSize; m <= kernelSize; m++) {
+                        var x = i + l;
+                        var y = j + m;
+                        if (x < 0 || y < 0 || x >= this.width || y >= this.height ||
+                                this.heightMap[x + y * this.width] < this.waterLevel) {
+                            continue;
+                        }
+                        var gauss = processing.gaussian(l, m, 3, 3);
+                        weightSum += gauss;
+                        sum += gauss * moistureMap[x + y * this.width];
+                    }
+                }
+                smoothMoistureData[i + j * this.width] = sum / weightSum;
+            }
+        }
+
+        processing.normalizeCalibrated(smoothMoistureData, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        return smoothMoistureData;
+    };
+
+    Continent.prototype.dropRain = function(rainAmount, x, y, riverMap) {
+        var minHeight = this.heightMap[x + y * this.width];
+        if (minHeight < this.waterLevel) {
+            return;
+        }
+        var minX = x;
+        var minY = y;
+        for (var i = -1; i <= 1; i++) {
+            for (var j = -1; j <= 1; j++) {
+                if (this.heightMap[(x + i) + (y + j) * this.width] < minHeight) {
+                    minX = x + i;
+                    minY = y + j;
+                    minHeight = this.heightMap[minX + minY * this.width];
+                }
+            }
+        }
+        riverMap[x + y * this.width] += rainAmount;
+        if (minX === x && minY === y) {
+            //local minima
+        } else {
+            this.dropRain(rainAmount, minX, minY, riverMap);
+        }
+    }
+
+    Continent.prototype.generateRiverMap = function() {
+        var riverMap = [];
+        for (var i = 0; i < this.width * this.height; i++) {
+            riverMap[i] = 0;
+        }
+
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                this.dropRain(this.moistureMap[i + j * this.width], i, j, riverMap);
+            }
+        }
+
+        processing.normalizeCalibrated(riverMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        for (var i = 0; i < this.width * this.height; i++) {
+            riverMap[i] = Math.sqrt(Math.sqrt(Math.sqrt(riverMap[i])));
+        }
+        return riverMap;
     };
 
     var continentCache = {};
@@ -241,8 +380,7 @@ var Continent = (function() {
         this.heightMap = this.generateHeightMap();
         this.temperatureMap = this.generateTemperatureMap();
         this.moistureMap = this.generateMoistureMap();
-        // this.oceanMask = this.generateOceanMask();
-        // this.shoreMask = this.generateShoreMask();
+        this.riverMap = this.generateRiverMap();
         return this;
     };
 
@@ -250,7 +388,7 @@ var Continent = (function() {
 
         switch (display) {
             case 'map':
-                this.renderMap(canvas);
+                this.renderMap2(canvas);
                 break;
             case 'topo':
                 this.renderTopographical(canvas);
@@ -263,6 +401,9 @@ var Continent = (function() {
                 break;
             case 'moisture':
                 this.renderHeatMap(canvas, this.moistureMap);
+                break;
+            case 'river':
+                this.renderHeatMap(canvas, this.riverMap);
                 break;
         }
         return this;

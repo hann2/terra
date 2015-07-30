@@ -100,6 +100,7 @@ var ProceduralControls = React.createClass({
                         <option value='parchment'>Parchment</option>
                         <option value='temperature'>Temperature</option>
                         <option value='moisture'>Moisture</option>
+                        <option value='river'>River</option>
                     </select>
                 </div>
                 <input onClick={this.handleSubmit} type='submit' value='render'/>
@@ -161,11 +162,11 @@ var Procedural = React.createClass({
     getInitialState: function() {
         return {
             signal: 'continent',
-            width: 1024,
-            height: 1024,
+            width: 600,
+            height: 600,
             xScale: 0.01,
             yScale: 0.01,
-            xVariance: 20000,
+            xVariance: 15000,
             yVariance: 15000,
             persistence: 0.5,
             octaves: 8,
