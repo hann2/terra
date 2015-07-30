@@ -65,13 +65,13 @@ var processing = (function() {
     processing.normalizeCalibrated = function(data, width, height, calibratedWidth, calibratedHeight) {
         var max = data[Math.floor(width / 2) + Math.floor(height / 2) * width];
         var min = max;
-        var xOffset = Math.floor((calibratedWidth - width) / 2);
-        var yOffset = Math.floor((calibratedHeight - height) / 2);
+        var xOffset = Math.floor((width - calibratedWidth) / 2);
+        var yOffset = Math.floor((height - calibratedHeight) / 2);
         for (var i = 0; i < calibratedWidth; i++) {
-            for (var j = 0; j < calibratedWidth; j++) {
+            for (var j = 0; j < calibratedHeight; j++) {
                 var x = i + xOffset;
                 var y = j + yOffset;
-                var value = data[x + j * width];
+                var value = data[x + y * width];
                 if (value > max) {
                     max = value;
                 }

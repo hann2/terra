@@ -6,6 +6,9 @@ var Multicontinent = (function () {
         this.calibrationHeight = this.continentHeight;
         this.continentWidth /= Math.sqrt(this.numContinents);
         this.continentHeight /= Math.sqrt(this.numContinents);
+
+        this.continentWidth = Math.floor(this.continentWidth);
+        this.continentHeight = Math.floor(this.continentHeight);
     };
 
     Multicontinent.prototype = Object.create(Continent.prototype);
@@ -21,7 +24,7 @@ var Multicontinent = (function () {
                 heightMap[cell] = turbulence;
             }
         }
-        processing.normalize(heightMap);
+        processing.normalizeCalibrated(heightMap);
 
         var continentCoords = [];
         Math.seedrandom('' + this.seed);
@@ -43,7 +46,7 @@ var Multicontinent = (function () {
                 heightMap[i + j * this.width] *= gauss * 0.5;
             }
         }
-        processing.normalize(heightMap);
+        processing.normalizeCalibrated(heightMap);
         return heightMap;
     };
 

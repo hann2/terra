@@ -144,7 +144,9 @@ var Continent = (function() {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
-                var turbulence = processing.turbulence(5 * i / this.continentHeight, 5 * j / this.continentHeight, 0.5, 8);
+                var x = i - this.width / 2;
+                var y = j - this.height / 2;
+                var turbulence = processing.turbulence(5 * x / this.continentHeight, 5 * y / this.continentHeight, 0.5, 8);
                 turbulence = processing.gain(0.4, turbulence);
                 heightMap[cell] = turbulence;
             }

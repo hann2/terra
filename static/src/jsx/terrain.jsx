@@ -160,9 +160,9 @@ var Procedural = React.createClass({
     },
     getInitialState: function() {
         return {
-            signal: 'multicontinent',
-            width: 512,
-            height: 512,
+            signal: 'continent',
+            width: 1024,
+            height: 1024,
             xScale: 0.01,
             yScale: 0.01,
             xVariance: 20000,
