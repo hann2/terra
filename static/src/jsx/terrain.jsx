@@ -159,7 +159,6 @@ var ProceduralControls = React.createClass({
 
 var Procedural = React.createClass({
     render: function() {
-        console.log(this.state);
         return (
             <div style={{'WebkitTouchCallout': 'none',
                     'WebkitUserSelect': 'none',

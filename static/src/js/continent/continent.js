@@ -1,7 +1,6 @@
 
 var Continent = (function() {
     var Continent = function(seed, width, height, windowX, windowY, windowWidth, windowHeight) {
-        console.log(windowWidth + ',' + width + ',' + windowX);
         this.seed = seed;
         this.width = width;
         this.height = height;
