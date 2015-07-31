@@ -116,6 +116,33 @@ var processing = (function() {
     }
 
     /**
+     *  Return a list of local maxima
+     */
+    processing.getMin = function(data, width, height) {
+        var local = [];
+        for (var xpos = 0; xpos < width; xpos++){
+            for (var ypos = 0; ypos < height; ypos++){
+                var minNeighbor = 0;
+                var myval = data[xpos + ypos * width];
+                for (var neighborX = -1; neighborX < 2; neighborX++){
+                    for (var neighborY = -1; neighborY < 2; neighborY++){
+                        var x = xpos + neighborX;
+                        var y = ypos + neighborY;
+                        if (x >= 0 && y >= 0 && x < width && y < height && data[x+y*width] <= myval){
+                            minNeighbor = neighborX + 3 * neighborY;
+                            myval = data[x+y*width];
+                        }
+                    }
+                }
+                if (minNeighbor === 0) {
+                    local.push(xpos + ypos * width);
+                }
+            }
+        }
+        return local;
+    }
+
+    /**
      *  Return a list of prominence for each local maxima
      *  Floodfill the points that can be reached by descending all local maxima
      *  start at the smallest and working upwards
@@ -180,6 +207,18 @@ var processing = (function() {
                 }
             }
         }
+    }
+
+    /**
+     *  Anti-Prominence
+     *  For lakes!
+     */
+    processing.antiProminence = function(minima, data, width, height){
+        var dataInverse = data.slice();
+        for(var i = 0; i < dataInverse.length; i++){
+            dataInverse[i] = dataInverse[i] * -1;
+        }
+        return processing.getProminence(minima, dataInverse, width, height);
     }
 
     return processing;
