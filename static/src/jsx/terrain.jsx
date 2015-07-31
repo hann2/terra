@@ -133,6 +133,11 @@ var ProceduralControls = React.createClass({
             yScale: yScale,
             xVariance: xVariance,
             yVariance: yVariance,
+            yVariance: yVariance,
+            windowX: this.props.windowX,
+            windowY: this.props.windowY,
+            windowWidth: this.props.windowWidth,
+            windowHeight: this.props.windowHeight,
             persistence: persistence,
             octaves: octaves,
             display: display
@@ -147,6 +152,7 @@ var ProceduralControls = React.createClass({
 
 var Procedural = React.createClass({
     render: function() {
+        console.log(this.state);
         return (
             <div style={{'WebkitTouchCallout': 'none',
                     'WebkitUserSelect': 'none',
@@ -162,13 +168,17 @@ var Procedural = React.createClass({
                         submitRender={this.submitRender} />
                 </div>
                 <div>
-                    <ProceduralCanvas {...this.state} />
+                    <ProceduralCanvas {...this.state} ref='canvas' />
                 </div>
             </div>
         );
     },
     componentDidMount: function() {
         var div = React.findDOMNode(this.refs.selectArea), x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        var canvas = $(React.findDOMNode(this.refs.canvas));
+        var offset = canvas.offset();
+        offset.right = offset.left + canvas.width();
+        offset.bottom = offset.top + canvas.height();
         function reCalc() {
             var x3 = Math.min(x1,x2);
             var x4 = Math.max(x1,x2);
@@ -179,28 +189,55 @@ var Procedural = React.createClass({
             div.style.width = x4 - x3 + 'px';
             div.style.height = y4 - y3 + 'px';
         }
+        var clamp = function(v, min, max) {
+            return Math.min(max, Math.max(min, v));
+        };
         onmousedown = function(e) {
+            if (e.clientX < offset.left || e.clientX > offset.right ||
+                e.clientY < offset.top || e.clientY > offset.bottom) {
+                div.hidden = 1;
+                return;
+            }
             div.hidden = 0;
             x1 = e.clientX;
             y1 = e.clientY;
             reCalc();
         };
         onmousemove = function(e) {
-            x2 = e.clientX;
-            y2 = e.clientY;
+            if (e.clientX < offset.left || e.clientX > offset.right ||
+                e.clientY < offset.top || e.clientY > offset.bottom) {
+                div.hidden = 1;
+                return;
+            }
+            x2 = clamp(e.clientX, offset.left, offset.right);
+            y2 = clamp(e.clientY, offset.top, offset.bottom);
             reCalc();
         };
+        var self = this;
         onmouseup = function(e) {
+            if (div.hidden) {
+                return;
+            }
             div.hidden = 1;
+            self.setState({
+                windowX: Math.floor(offset.left + self.state.width / 2) - (Math.min(x1, x2) + Math.abs(x1 - x2)),
+                windowY: Math.floor(offset.top + self.state.height / 2) - (Math.min(y1, y2) + Math.abs(y1 - y2)),
+                windowWidth: Math.abs(x1 - x2),
+                windowHeight: Math.abs(y1 - y2)
+            });
         };
     },
     getInitialState: function() {
         return {
             signal: 'continent',
-            width: 600,
-            height: 600,
+            width: 512,
+            height: 512,
             xScale: 0.01,
             yScale: 0.01,
+            windowX: 0,
+            windowY: 0,
+            windowWidth: 512,
+            windowHeight: 512,
             xVariance: 15000,
             yVariance: 15000,
             persistence: 0.5,

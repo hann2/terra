@@ -51,6 +51,10 @@ var processing = (function() {
                 min = value;
             }
         }
+        if (!data.queue) {
+            data.queue = [];
+        }
+        data.queue.push([max, min]);
 
         var range = max - min;
         for (var i = 0; i < data.length; i++) {
@@ -58,29 +62,10 @@ var processing = (function() {
         }
     };
 
-    /**
-     *  Normalizes, considering only the region within calibratedWidth/calibratedHeight
-     *      assumes calibratedWidth >= width && height >= calibratedHeight
-     */
-    processing.normalizeCalibrated = function(data, width, height, calibratedWidth, calibratedHeight) {
-        var max = data[Math.floor(width / 2) + Math.floor(height / 2) * width];
-        var min = max;
-        var xOffset = Math.floor((width - calibratedWidth) / 2);
-        var yOffset = Math.floor((height - calibratedHeight) / 2);
-        for (var i = 0; i < calibratedWidth; i++) {
-            for (var j = 0; j < calibratedHeight; j++) {
-                var x = i + xOffset;
-                var y = j + yOffset;
-                var value = data[x + y * width];
-                if (value > max) {
-                    max = value;
-                }
-                if (value < min) {
-                    min = value;
-                }
-            }
-        }
-
+    processing.normalizeCalibrated = function(data, calibrationData) {
+        var max = calibrationData.queue[0][0];
+        var min = calibrationData.queue[0][1];
+        calibrationData.queue.shift();
         var range = max - min;
         for (var i = 0; i < data.length; i++) {
             data[i] = range === 0 ? 0 : (data[i] - min) / range;

@@ -56,11 +56,11 @@ var terrain = (function() {
                 renderGaussian(canvas, props);
                 break;
             case 'continent':
-                var continent = new Continent(props.seed, props.width, props.height);
+                var continent = new Continent(props.seed, props.width, props.height, props.windowX, props.windowY, props.windowWidth, props.windowHeight);
                 continent.generate(canvas).render(canvas, props.display);
                 break;
             case 'multicontinent':
-                var continent = new Multicontinent(props.seed, props.width, props.height);
+                var continent = new Multicontinent(props.seed, props.width, props.height, props.windowX, props.windowY, props.windowWidth, props.windowHeight);
                 continent.generate(canvas).render(canvas, props.display);
                 break;
         }

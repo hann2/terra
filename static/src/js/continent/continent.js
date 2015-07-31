@@ -1,21 +1,35 @@
 
 var Continent = (function() {
-    var Continent = function(seed, width, height) {
+    var Continent = function(seed, width, height, windowX, windowY, windowWidth, windowHeight) {
+        console.log(windowWidth + ',' + width + ',' + windowX);
         this.seed = seed;
         this.width = width;
         this.height = height;
+        this.waterLevel = 0.2;
         this.continentWidth = 512;
         this.continentHeight = 512;
-        this.calibrationWidth = this.continentWidth;
-        this.calibrationHeight = this.continentHeight;
-        this.waterLevel = 0.2;
+        this.windowX = windowX;
+        this.windowY = windowY;
+        this.windowWidth = windowWidth;
+        this.windowHeight = windowHeight;
+        if (windowWidth == 512 && width == 512 && windowX == 0 &&
+            windowHeight == 512 && height == 512 && windowY == 0) {
+            this.calibrationContinent = null;
+        } else {
+            console.log('recursive');
+            this.calibrationContinent = new Continent(seed, 512, 512, 0, 0, 512, 512);
+        }
     };
 
     Continent.prototype.isEqual = function(continent) {
         return continent &&
             continent.seed === this.seed &&
             continent.width === this.width &&
-            continent.height === this.height;
+            continent.height === this.height &&
+            continent.windowX === this.windowX &&
+            continent.windowY === this.windowY &&
+            continent.windowWidth === this.windowWidth &&
+            continent.windowHeight === this.windowHeight;
     };
 
     var getContinentColor = function(height, waterLevel) {
@@ -85,7 +99,7 @@ var Continent = (function() {
             colorTerms.push([0, 100, 0, 1 - ratio]);     //dark green
         } else if (height > 0.25) {
             var range = 0.6 - 0.25;
-            var ratio = (height - 0.25) / range
+            var ratio = processing.bias(0.8, (height - 0.25) / range);
             colorTerms.push([0, 100, 0, ratio]);     //dark green
             colorTerms.push([50, 205, 50, (1 - ratio)]);   //light green
         } else if (height > 0.22) {
@@ -222,24 +236,36 @@ var Continent = (function() {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
-                var x = i - this.width / 2;
-                var y = j - this.height / 2;
+                var i2 = (i - (this.windowX + this.width / 2 - this.windowWidth / 2)) * this.width / this.windowWidth;
+                var j2 = (j - (this.windowY + this.height / 2 - this.windowHeight / 2)) * this.height / this.windowHeight;
+                var x = Math.floor(i2 - this.width / 2);
+                var y = Math.floor(j2 - this.height / 2);
                 var turbulence = processing.turbulence(5 * x / this.continentHeight, 5 * y / this.continentHeight, 0.5, 6);
                 turbulence = processing.gain(0.4, turbulence);
                 heightMap[cell] = turbulence;
             }
         }
-        processing.normalizeCalibrated(heightMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(heightMap, this.calibrationContinent.heightMap);
+        } else {
+            processing.normalize(heightMap);
+        }
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
-                var x = i - this.width / 2;
-                var y = j - this.height / 2;
+                var i2 = (i - (this.windowX + this.width / 2 - this.windowWidth / 2)) * this.width / this.windowWidth;
+                var j2 = (j - (this.windowY + this.height / 2 - this.windowHeight / 2)) * this.height / this.windowHeight;
+                var x = Math.floor(i2 - this.width / 2);
+                var y = Math.floor(j2 - this.height / 2);
                 var gauss = processing.gaussian(x, y, 30 * this.continentWidth, 30 * this.continentHeight) * 0.80 + 0.15;
                 heightMap[cell] *= gauss;
             }
         }
-        processing.normalizeCalibrated(heightMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(heightMap, this.calibrationContinent.heightMap);
+        } else {
+            processing.normalize(heightMap);
+        }
         return heightMap;
     };
 
@@ -254,7 +280,11 @@ var Continent = (function() {
                 temperatureMap[cell] = turbulence;
             }
         }
-        processing.normalizeCalibrated(temperatureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(temperatureMap, this.calibrationContinent.temperatureMap);
+        } else {
+            processing.normalize(temperatureMap);
+        }
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
@@ -263,7 +293,11 @@ var Continent = (function() {
                 temperatureMap[cell] = (temperatureMap[cell] + gauss) * gauss;
             }
         }
-        processing.normalizeCalibrated(temperatureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(temperatureMap, this.calibrationContinent.temperatureMap);
+        } else {
+            processing.normalize(temperatureMap);
+        }
         return temperatureMap;
     };
 
@@ -295,7 +329,11 @@ var Continent = (function() {
                 }
             }
         }
-        processing.normalizeCalibrated(moistureMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(moistureMap, this.calibrationContinent.moistureMap);
+        } else {
+            processing.normalize(moistureMap);
+        }
         noise.seed((this.seed + 0.2) % 1);
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
@@ -332,8 +370,12 @@ var Continent = (function() {
                 smoothMoistureData[i + j * this.width] = sum / weightSum;
             }
         }
-
-        processing.normalizeCalibrated(smoothMoistureData, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        smoothMoistureData.queue = moistureMap.queue;
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(smoothMoistureData, this.calibrationContinent.moistureMap);
+        } else {
+            processing.normalize(smoothMoistureData);
+        }
         return smoothMoistureData;
     };
 
@@ -373,19 +415,26 @@ var Continent = (function() {
             }
         }
 
-        processing.normalizeCalibrated(riverMap, this.width, this.height, this.calibrationWidth, this.calibrationHeight);
+        if (this.calibrationContinent) {
+            processing.normalizeCalibrated(riverMap, this.calibrationContinent.riverMap);
+        } else {
+            processing.normalize(riverMap);
+        }
         for (var i = 0; i < this.width * this.height; i++) {
             riverMap[i] = Math.sqrt(Math.sqrt(Math.sqrt(riverMap[i])));
         }
         return riverMap;
     };
 
-    var continentCache = {};
+    // var continentCache = {};
     Continent.prototype.generate = function(canvas) {
-        if (this.isEqual(continentCache)) {
-            return continentCache;
+        // if (this.isEqual(continentCache)) {
+        //     return continentCache;
+        // }
+        // continentCache = this;
+        if (this.calibrationContinent) {
+            this.calibrationContinent.generate();
         }
-        continentCache = this;
 
         this.heightMap = this.generateHeightMap();
         this.temperatureMap = this.generateTemperatureMap();
