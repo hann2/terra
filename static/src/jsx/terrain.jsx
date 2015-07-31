@@ -220,10 +220,12 @@ var Procedural = React.createClass({
             }
             div.hidden = 1;
             self.setState({
-                windowX: Math.floor(offset.left + self.state.width / 2) - (Math.min(x1, x2) + Math.abs(x1 - x2) / 2),
-                windowY: Math.floor(offset.top + self.state.height / 2) - (Math.min(y1, y2) + Math.abs(y1 - y2) / 2),
-                windowWidth: Math.abs(x1 - x2),
-                windowHeight: Math.abs(y1 - y2)
+                windowX: self.state.windowX + Math.floor(((offset.left + self.state.width / 2) - (Math.min(x1, x2) + Math.abs(x1 - x2) / 2)) * self.state.windowWidth / self.state.width),
+                windowY: self.state.windowY + Math.floor(((offset.top + self.state.height / 2) - (Math.min(y1, y2) + Math.abs(y1 - y2) / 2)) * self.state.windowHeight / self.state.height),
+                windowWidth: Math.floor(self.state.windowWidth * Math.abs(x1 - x2) / self.state.width),
+                windowHeight: Math.floor(self.state.windowHeight * Math.abs(y1 - y2) / self.state.height)
+                //windowWidth: Math.abs(x1-x2),
+                //windowHeight: Math.abs(y1-y2)
             });
         };
     },
