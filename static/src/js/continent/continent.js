@@ -275,7 +275,11 @@ var Continent = (function() {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
-                var turbulence = processing.turbulence(0.01 * i, 0.01 * j, 0.5, 4);
+                var i2 = Math.floor(i - this.width / 2);
+                var j2 = Math.floor(j - this.height / 2);
+                var x = i2 * this.windowWidth / this.width - this.windowX;
+                var y = j2 * this.windowHeight / this.height - this.windowY;
+                var turbulence = processing.turbulence(0.01 * x, 0.01 * y, 0.5, 4);
                 // turbulence = processing.bias(0.7, turbulence);
                 temperatureMap[cell] = turbulence;
             }
@@ -288,7 +292,8 @@ var Continent = (function() {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var cell = (i + j * this.width);
-                var y = j - this.height / 2;
+                var j2 = Math.floor(j - this.height / 2);
+                var y = j2 * this.windowHeight / this.height - this.windowY;
                 var gauss = processing.gaussian(0, y, 1, 30 * this.continentHeight);
                 temperatureMap[cell] = (temperatureMap[cell] + gauss) * gauss;
             }

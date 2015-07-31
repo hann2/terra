@@ -103,12 +103,19 @@ var ProceduralControls = React.createClass({
                         <option value='river'>River</option>
                     </select>
                 </div>
-                <input onClick={this.handleSubmit} type='submit' value='render'/>
+                <input onClick={this.fooBar} type='submit' value='render'/>
             </div>
         );
     },
     handleSignalChange: function() {
         var signal = React.findDOMNode(this.refs.signal).value.trim();
+        this.handleSubmit();
+    },
+    fooBar: function() {
+        this.props.windowX = 0;
+        this.props.windowY = 0;
+        this.props.windowWidth = 512;
+        this.props.windowHeight = 512;
         this.handleSubmit();
     },
     handleSubmit: function() {
@@ -146,7 +153,7 @@ var ProceduralControls = React.createClass({
     handleReroll: function() {
         var seed = Math.random();
         React.findDOMNode(this.refs.seed).value = seed;
-        this.handleSubmit();
+        this.fooBar();
     }
 });
 
