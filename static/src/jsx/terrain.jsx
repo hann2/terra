@@ -224,8 +224,6 @@ var Procedural = React.createClass({
                 windowY: self.state.windowY + Math.floor(((offset.top + self.state.height / 2) - (Math.min(y1, y2) + Math.abs(y1 - y2) / 2)) * self.state.windowHeight / self.state.height),
                 windowWidth: Math.floor(self.state.windowWidth * Math.abs(x1 - x2) / self.state.width),
                 windowHeight: Math.floor(self.state.windowHeight * Math.abs(y1 - y2) / self.state.height)
-                //windowWidth: Math.abs(x1-x2),
-                //windowHeight: Math.abs(y1-y2)
             });
         };
     },
