@@ -146,6 +146,8 @@ var Continent = (function() {
 
     Continent.prototype.renderTopographical = function(canvas) {
         var imageData = [];
+        var maxList = processing.getMax(this.heightMap, this.width, this.height);
+        var prominence = processing.getProminence(maxList, this.heightMap, this.width, this.height);
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 var imageCell = (i + j * this.width) * 4;
@@ -169,6 +171,14 @@ var Continent = (function() {
                 imageData[imageCell + 1] = color[1];
                 imageData[imageCell + 2] = color[2];
                 imageData[imageCell + 3] = 256;
+            }
+        }
+        for (var i = 0; i < maxList.length; i++){
+            if(prominence[i] > .5){
+                imageData[maxList[i]*4] = 255;
+                imageData[maxList[i]*4 + 1] = 0;
+                imageData[maxList[i]*4 + 2] = 0;
+                imageData[maxList[i]*4 + 3] = 255;
             }
         }
         renderImageToCanvas(canvas, imageData, this.width, this.height);
@@ -214,7 +224,7 @@ var Continent = (function() {
                 var cell = (i + j * this.width);
                 var x = i - this.width / 2;
                 var y = j - this.height / 2;
-                var turbulence = processing.turbulence(5 * x / this.continentHeight, 5 * y / this.continentHeight, 0.5, 8);
+                var turbulence = processing.turbulence(5 * x / this.continentHeight, 5 * y / this.continentHeight, 0.5, 6);
                 turbulence = processing.gain(0.4, turbulence);
                 heightMap[cell] = turbulence;
             }
