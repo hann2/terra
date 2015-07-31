@@ -86,8 +86,8 @@ var Continent = (function() {
         } else if (height > 0.25) {
             var range = 0.6 - 0.25;
             var ratio = (height - 0.25) / range
-            colorTerms.push([0, 100, 0, 5 * ratio]);     //dark green
-            colorTerms.push([50, 205, 50, 1 - ratio]);   //light green
+            colorTerms.push([0, 100, 0, ratio]);     //dark green
+            colorTerms.push([50, 205, 50, (1 - ratio)]);   //light green
         } else if (height > 0.22) {
             colorTerms.push([50, 205, 50, 1]);   //light green
         } else {

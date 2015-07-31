@@ -148,7 +148,15 @@ var ProceduralControls = React.createClass({
 var Procedural = React.createClass({
     render: function() {
         return (
-            <div>
+            <div style={{'WebkitTouchCallout': 'none',
+                    'WebkitUserSelect': 'none',
+                    'KhtmlUserSelect': 'none',
+                    'MozUserSelect': 'none',
+                    'msUserSelect': 'none',
+                    'OUserSelect': 'none',
+                    'userSelect': 'none'
+                }}>
+                <div style={{border: '1px dotted #000', position: 'absolute'}} ref='selectArea' hidden></div>
                 <div style={{'width': 300, 'float': 'left'}}>
                     <ProceduralControls {...this.state}
                         submitRender={this.submitRender} />
@@ -158,6 +166,33 @@ var Procedural = React.createClass({
                 </div>
             </div>
         );
+    },
+    componentDidMount: function() {
+        var div = React.findDOMNode(this.refs.selectArea), x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        function reCalc() {
+            var x3 = Math.min(x1,x2);
+            var x4 = Math.max(x1,x2);
+            var y3 = Math.min(y1,y2);
+            var y4 = Math.max(y1,y2);
+            div.style.left = x3 + 'px';
+            div.style.top = y3 + 'px';
+            div.style.width = x4 - x3 + 'px';
+            div.style.height = y4 - y3 + 'px';
+        }
+        onmousedown = function(e) {
+            div.hidden = 0;
+            x1 = e.clientX;
+            y1 = e.clientY;
+            reCalc();
+        };
+        onmousemove = function(e) {
+            x2 = e.clientX;
+            y2 = e.clientY;
+            reCalc();
+        };
+        onmouseup = function(e) {
+            div.hidden = 1;
+        };
     },
     getInitialState: function() {
         return {
