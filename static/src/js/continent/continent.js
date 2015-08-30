@@ -15,7 +15,6 @@ var Continent = (function() {
             windowHeight == 512 && height == 512 && windowY == 0) {
             this.calibrationContinent = null;
         } else {
-            console.log('recursive');
             this.calibrationContinent = new Continent(seed, 512, 512, 0, 0, 512, 512);
         }
     };
@@ -430,12 +429,7 @@ var Continent = (function() {
         return riverMap;
     };
 
-    // var continentCache = {};
     Continent.prototype.generate = function(canvas) {
-        // if (this.isEqual(continentCache)) {
-        //     return continentCache;
-        // }
-        // continentCache = this;
         if (this.calibrationContinent) {
             this.calibrationContinent.generate();
         }
